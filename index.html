@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My First Game</title>
+
+    <style>
+        body {
+            margin: 0;
+            background: #111;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 15px;
+        }
+
+        canvas {
+            background: #222;
+            border: 3px solid white;
+            display: block;
+            margin: auto;
+        }
+
+        #info {
+            font-size: 18px;
+            margin: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>🔥 My First Game 🔥</h1>
+
+<div id="info">
+    Use WASD or the arrow keys to move!
+    <br>
+    Score: <span id="score">0</span>
+</div>
+
+<canvas id="game" width="800" height="500"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const player = {
+    x: 380,
+    y: 230,
+    size: 40,
+    speed: 5
+};
+
+const coin = {
+    x: Math.random() * 760,
+    y: Math.random() * 460,
+    size: 20
+};
+
+let score = 0;
+
+const keys = {};
+
+document.addEventListener("keydown", function(event) {
+    keys[event.key.toLowerCase()] = true;
+});
+
+document.addEventListener("keyup", function(event) {
+    keys[event.key.toLowerCase()] = false;
+});
+
+function update() {
+
+    if (keys["w"] || keys["arrowup"]) {
+        player.y -= player.speed;
+    }
+
+    if (keys["s"] || keys["arrowdown"]) {
+        player.y += player.speed;
+    }
+
+    if (keys["a"] || keys["arrowleft"]) {
+        player.x -= player.speed;
+    }
+
+    if (keys["d"] || keys["arrowright"]) {
+        player.x += player.speed;
+    }
+
+    // Keep player inside the game
+    player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
+    player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
+
+    // Check if player touches coin
+    if (
+        player.x < coin.x + coin.size &&
+        player.x + player.size > coin.x &&
+        player.y < coin.y + coin.size &&
+        player.y + player.size > coin.y
+    ) {
+        score++;
+        document.getElementById("score").textContent = score;
+
+        coin.x = Math.random() * (canvas.width - coin.size);
+        coin.y = Math.random() * (canvas.height - coin.size);
+    }
+}
+
+function draw() {
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Player
+    ctx.fillStyle = "orange";
+    ctx.fillRect(
+        player.x,
+        player.y,
+        player.size,
+        player.size
+    );
+
+    // Coin
+    ctx.fillStyle = "gold";
+    ctx.beginPath();
+    ctx.arc(
+        coin.x + coin.size / 2,
+        coin.y + coin.size / 2,
+        coin.size / 2,
+        0,
+        Math.PI * 2
+    );
+    ctx.fill();
+}
+
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+
+</body>
+</html>
