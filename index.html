@@ -65,6 +65,8 @@ const player = {
     size: 36,
     speed: 5
 };
+const playerImage = new Image();
+playerImage.src = "player.png";
 
 
 // =============================
@@ -450,76 +452,26 @@ function draw() {
 
 
     // =============================
-    // FLAMEQIBLI PLAYER
-    // =============================
+// FLAMEQIBLI PLAYER SPRITE
+// =============================
 
-    const px = player.x - camera.x;
-    const py = player.y - camera.y;
+const px = player.x - camera.x;
+const py = player.y - camera.y;
 
+// First frame of the DOWN/IDLE animation
+ctx.drawImage(
+    playerImage,
 
-    // Body
+    105, 100,     // part of sprite sheet to use
+    70, 145,
 
-    ctx.fillStyle = "#ff6a00";
-
-    ctx.fillRect(
-        px,
-        py + 10,
-        player.size,
-        player.size - 10
-    );
-
-
-    // Head
-
-    ctx.fillStyle = "#ffd0a0";
-
-    ctx.beginPath();
-
-    ctx.arc(
-        px + player.size / 2,
-        py + 8,
-        14,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
-
-    // Fiery hair
-
-    ctx.fillStyle = "#ff3300";
-
-    ctx.beginPath();
-
-    ctx.moveTo(px + 5, py + 5);
-    ctx.lineTo(px + 12, py - 15);
-    ctx.lineTo(px + 18, py + 2);
-    ctx.lineTo(px + 25, py - 20);
-    ctx.lineTo(px + 31, py + 5);
-
-    ctx.fill();
-
-
-    // Eyes
-
-    ctx.fillStyle = "black";
-
-    ctx.fillRect(
-        px + 10,
-        py + 5,
-        3,
-        3
-    );
-
-    ctx.fillRect(
-        px + 24,
-        py + 5,
-        3,
-        3
-    );
+    px - 12,
+    py - 35,
+    60,
+    100
+);
+    
 }
-
 
 // =============================
 // GAME LOOP
