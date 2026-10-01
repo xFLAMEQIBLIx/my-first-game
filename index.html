@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>My First Game</title>
+    <title>FlameQibli Adventure</title>
 
     <style>
         body {
@@ -10,56 +10,76 @@
             color: white;
             font-family: Arial, sans-serif;
             text-align: center;
+            overflow: hidden;
         }
 
         h1 {
-            margin: 15px;
-        }
-
-        canvas {
-            background: #222;
-            border: 3px solid white;
-            display: block;
-            margin: auto;
+            margin: 8px;
         }
 
         #info {
-            font-size: 18px;
-            margin: 10px;
+            margin-bottom: 8px;
+        }
+
+        canvas {
+            border: 3px solid white;
+            display: block;
+            margin: auto;
+            background: #4caf50;
         }
     </style>
 </head>
 
 <body>
 
-<h1>🔥 My First Game 🔥</h1>
+<h1>🔥 FlameQibli Adventure 🔥</h1>
 
 <div id="info">
-    Use WASD or the arrow keys to move!
-    <br>
+    WASD / Arrow Keys to move |
     Score: <span id="score">0</span>
 </div>
 
-<canvas id="game" width="800" height="500"></canvas>
+<canvas id="game" width="900" height="550"></canvas>
 
 <script>
+
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+
+// =============================
+// WORLD
+// =============================
+
+const worldWidth = 2400;
+const worldHeight = 1800;
+
+
+// =============================
+// PLAYER
+// =============================
+
 const player = {
-    x: 380,
-    y: 230,
-    size: 40,
+    x: 1200,
+    y: 900,
+    size: 36,
     speed: 5
 };
 
-const coin = {
-    x: Math.random() * 760,
-    y: Math.random() * 460,
-    size: 20
+
+// =============================
+// CAMERA
+// =============================
+
+const camera = {
+    x: 0,
+    y: 0
 };
 
-let score = 0;
+
+// =============================
+// CONTROLS
+// =============================
 
 const keys = {};
 
@@ -71,76 +91,451 @@ document.addEventListener("keyup", function(event) {
     keys[event.key.toLowerCase()] = false;
 });
 
+
+// =============================
+// SCORE
+// =============================
+
+let score = 0;
+
+
+// =============================
+// OBJECTS
+// =============================
+
+const trees = [
+    {x: 300, y: 300},
+    {x: 500, y: 600},
+    {x: 800, y: 350},
+    {x: 1600, y: 300},
+    {x: 1900, y: 600},
+    {x: 2100, y: 1000},
+    {x: 500, y: 1300},
+    {x: 1000, y: 1500},
+    {x: 1700, y: 1450}
+];
+
+const rocks = [
+    {x: 400, y: 1000},
+    {x: 700, y: 1200},
+    {x: 1400, y: 400},
+    {x: 1800, y: 1100},
+    {x: 1200, y: 1400}
+];
+
+
+// =============================
+// WATER
+// =============================
+
+const water = {
+    x: 1450,
+    y: 700,
+    width: 500,
+    height: 350
+};
+
+
+// =============================
+// COIN
+// =============================
+
+const coin = {
+    x: 1400,
+    y: 500,
+    size: 22
+};
+
+
+// =============================
+// COLLISION
+// =============================
+
+function rectangleCollision(a, b) {
+
+    return (
+        a.x < b.x + b.width &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.height > b.y
+    );
+
+}
+
+
+function isBlocked(newX, newY) {
+
+    const playerBox = {
+        x: newX,
+        y: newY,
+        width: player.size,
+        height: player.size
+    };
+
+
+    // Water
+
+    if (
+        newX < water.x + water.width &&
+        newX + player.size > water.x &&
+        newY < water.y + water.height &&
+        newY + player.size > water.y
+    ) {
+        return true;
+    }
+
+
+    // Trees
+
+    for (const tree of trees) {
+
+        const treeBox = {
+            x: tree.x - 20,
+            y: tree.y - 20,
+            width: 40,
+            height: 40
+        };
+
+        if (rectangleCollision(playerBox, treeBox)) {
+            return true;
+        }
+    }
+
+
+    // Rocks
+
+    for (const rock of rocks) {
+
+        const rockBox = {
+            x: rock.x - 18,
+            y: rock.y - 18,
+            width: 36,
+            height: 36
+        };
+
+        if (rectangleCollision(playerBox, rockBox)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
+// =============================
+// UPDATE
+// =============================
+
 function update() {
 
+    let newX = player.x;
+    let newY = player.y;
+
+
     if (keys["w"] || keys["arrowup"]) {
-        player.y -= player.speed;
+        newY -= player.speed;
     }
 
     if (keys["s"] || keys["arrowdown"]) {
-        player.y += player.speed;
+        newY += player.speed;
     }
 
     if (keys["a"] || keys["arrowleft"]) {
-        player.x -= player.speed;
+        newX -= player.speed;
     }
 
     if (keys["d"] || keys["arrowright"]) {
-        player.x += player.speed;
+        newX += player.speed;
     }
 
-    // Keep player inside the game
-    player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
-    player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
 
-    // Check if player touches coin
+    // Collision
+
+    if (!isBlocked(newX, player.y)) {
+        player.x = newX;
+    }
+
+    if (!isBlocked(player.x, newY)) {
+        player.y = newY;
+    }
+
+
+    // World boundaries
+
+    player.x = Math.max(
+        0,
+        Math.min(worldWidth - player.size, player.x)
+    );
+
+    player.y = Math.max(
+        0,
+        Math.min(worldHeight - player.size, player.y)
+    );
+
+
+    // Coin collision
+
     if (
         player.x < coin.x + coin.size &&
         player.x + player.size > coin.x &&
         player.y < coin.y + coin.size &&
         player.y + player.size > coin.y
     ) {
+
         score++;
+
         document.getElementById("score").textContent = score;
 
-        coin.x = Math.random() * (canvas.width - coin.size);
-        coin.y = Math.random() * (canvas.height - coin.size);
+        coin.x = 100 + Math.random() * (worldWidth - 200);
+        coin.y = 100 + Math.random() * (worldHeight - 200);
     }
+
+
+    // Camera follows player
+
+    camera.x = player.x - canvas.width / 2;
+    camera.y = player.y - canvas.height / 2;
+
+
+    camera.x = Math.max(
+        0,
+        Math.min(worldWidth - canvas.width, camera.x)
+    );
+
+    camera.y = Math.max(
+        0,
+        Math.min(worldHeight - canvas.height, camera.y)
+    );
 }
+
+
+// =============================
+// DRAW
+// =============================
 
 function draw() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Player
-    ctx.fillStyle = "orange";
+
+    // Grass
+
+    ctx.fillStyle = "#4caf50";
+
     ctx.fillRect(
-        player.x,
-        player.y,
-        player.size,
-        player.size
+        0,
+        0,
+        canvas.width,
+        canvas.height
     );
 
+
+    // Grid
+
+    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.lineWidth = 1;
+
+    for (
+        let x = -camera.x % 50;
+        x < canvas.width;
+        x += 50
+    ) {
+
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+    }
+
+    for (
+        let y = -camera.y % 50;
+        y < canvas.height;
+        y += 50
+    ) {
+
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+    }
+
+
+    // Water
+
+    ctx.fillStyle = "#2389da";
+
+    ctx.fillRect(
+        water.x - camera.x,
+        water.y - camera.y,
+        water.width,
+        water.height
+    );
+
+
+    // Trees
+
+    for (const tree of trees) {
+
+        const x = tree.x - camera.x;
+        const y = tree.y - camera.y;
+
+        // Trunk
+
+        ctx.fillStyle = "#7b4a24";
+
+        ctx.fillRect(
+            x - 7,
+            y,
+            14,
+            25
+        );
+
+
+        // Leaves
+
+        ctx.fillStyle = "#176b2c";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y - 5,
+            25,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+
+    // Rocks
+
+    for (const rock of rocks) {
+
+        const x = rock.x - camera.x;
+        const y = rock.y - camera.y;
+
+        ctx.fillStyle = "#777";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            x,
+            y,
+            18,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+
     // Coin
+
     ctx.fillStyle = "gold";
+
     ctx.beginPath();
+
     ctx.arc(
-        coin.x + coin.size / 2,
-        coin.y + coin.size / 2,
+        coin.x - camera.x + coin.size / 2,
+        coin.y - camera.y + coin.size / 2,
         coin.size / 2,
         0,
         Math.PI * 2
     );
+
     ctx.fill();
+
+
+    // =============================
+    // FLAMEQIBLI PLAYER
+    // =============================
+
+    const px = player.x - camera.x;
+    const py = player.y - camera.y;
+
+
+    // Body
+
+    ctx.fillStyle = "#ff6a00";
+
+    ctx.fillRect(
+        px,
+        py + 10,
+        player.size,
+        player.size - 10
+    );
+
+
+    // Head
+
+    ctx.fillStyle = "#ffd0a0";
+
+    ctx.beginPath();
+
+    ctx.arc(
+        px + player.size / 2,
+        py + 8,
+        14,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    // Fiery hair
+
+    ctx.fillStyle = "#ff3300";
+
+    ctx.beginPath();
+
+    ctx.moveTo(px + 5, py + 5);
+    ctx.lineTo(px + 12, py - 15);
+    ctx.lineTo(px + 18, py + 2);
+    ctx.lineTo(px + 25, py - 20);
+    ctx.lineTo(px + 31, py + 5);
+
+    ctx.fill();
+
+
+    // Eyes
+
+    ctx.fillStyle = "black";
+
+    ctx.fillRect(
+        px + 10,
+        py + 5,
+        3,
+        3
+    );
+
+    ctx.fillRect(
+        px + 24,
+        py + 5,
+        3,
+        3
+    );
 }
 
+
+// =============================
+// GAME LOOP
+// =============================
+
 function gameLoop() {
+
     update();
+
     draw();
+
     requestAnimationFrame(gameLoop);
 }
 
 gameLoop();
+
 </script>
 
 </body>
