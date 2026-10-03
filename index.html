@@ -65,8 +65,18 @@ const player = {
     size: 36,
     speed: 5
 };
+
 const playerImage = new Image();
 playerImage.src = "player.png";
+
+
+// =============================
+// ANIMATION
+// =============================
+
+let animationFrame = 0;
+let animationTimer = 0;
+let isMoving = false;
 
 
 // =============================
@@ -175,7 +185,7 @@ function isBlocked(newX, newY) {
     };
 
 
-    // Water
+    // WATER
 
     if (
         newX < water.x + water.width &&
@@ -187,7 +197,7 @@ function isBlocked(newX, newY) {
     }
 
 
-    // Trees
+    // TREES
 
     for (const tree of trees) {
 
@@ -204,7 +214,7 @@ function isBlocked(newX, newY) {
     }
 
 
-    // Rocks
+    // ROCKS
 
     for (const rock of rocks) {
 
@@ -233,25 +243,44 @@ function update() {
     let newX = player.x;
     let newY = player.y;
 
+    isMoving = false;
+
+
+    // UP
 
     if (keys["w"] || keys["arrowup"]) {
         newY -= player.speed;
+        isMoving = true;
     }
+
+
+    // DOWN
 
     if (keys["s"] || keys["arrowdown"]) {
         newY += player.speed;
+        isMoving = true;
     }
+
+
+    // LEFT
 
     if (keys["a"] || keys["arrowleft"]) {
         newX -= player.speed;
+        isMoving = true;
     }
+
+
+    // RIGHT
 
     if (keys["d"] || keys["arrowright"]) {
         newX += player.speed;
+        isMoving = true;
     }
 
 
-    // Collision
+    // =============================
+    // COLLISION
+    // =============================
 
     if (!isBlocked(newX, player.y)) {
         player.x = newX;
@@ -262,7 +291,9 @@ function update() {
     }
 
 
-    // World boundaries
+    // =============================
+    // WORLD BOUNDARIES
+    // =============================
 
     player.x = Math.max(
         0,
@@ -275,7 +306,35 @@ function update() {
     );
 
 
-    // Coin collision
+    // =============================
+    // ANIMATION
+    // =============================
+
+    if (isMoving) {
+
+        animationTimer++;
+
+        if (animationTimer >= 10) {
+
+            animationFrame++;
+
+            animationTimer = 0;
+
+            if (animationFrame >= 2) {
+                animationFrame = 0;
+            }
+        }
+
+    } else {
+
+        animationFrame = 0;
+        animationTimer = 0;
+    }
+
+
+    // =============================
+    // COIN
+    // =============================
 
     if (
         player.x < coin.x + coin.size &&
@@ -293,7 +352,9 @@ function update() {
     }
 
 
-    // Camera follows player
+    // =============================
+    // CAMERA
+    // =============================
 
     camera.x = player.x - canvas.width / 2;
     camera.y = player.y - canvas.height / 2;
@@ -317,10 +378,17 @@ function update() {
 
 function draw() {
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
 
 
-    // Grass
+    // =============================
+    // GRASS
+    // =============================
 
     ctx.fillStyle = "#4caf50";
 
@@ -332,10 +400,13 @@ function draw() {
     );
 
 
-    // Grid
+    // =============================
+    // GRID
+    // =============================
 
     ctx.strokeStyle = "rgba(255,255,255,0.08)";
     ctx.lineWidth = 1;
+
 
     for (
         let x = -camera.x % 50;
@@ -344,10 +415,13 @@ function draw() {
     ) {
 
         ctx.beginPath();
+
         ctx.moveTo(x, 0);
         ctx.lineTo(x, canvas.height);
+
         ctx.stroke();
     }
+
 
     for (
         let y = -camera.y % 50;
@@ -356,13 +430,17 @@ function draw() {
     ) {
 
         ctx.beginPath();
+
         ctx.moveTo(0, y);
         ctx.lineTo(canvas.width, y);
+
         ctx.stroke();
     }
 
 
-    // Water
+    // =============================
+    // WATER
+    // =============================
 
     ctx.fillStyle = "#2389da";
 
@@ -374,12 +452,15 @@ function draw() {
     );
 
 
-    // Trees
+    // =============================
+    // TREES
+    // =============================
 
     for (const tree of trees) {
 
         const x = tree.x - camera.x;
         const y = tree.y - camera.y;
+
 
         // Trunk
 
@@ -411,7 +492,9 @@ function draw() {
     }
 
 
-    // Rocks
+    // =============================
+    // ROCKS
+    // =============================
 
     for (const rock of rocks) {
 
@@ -434,7 +517,9 @@ function draw() {
     }
 
 
-    // Coin
+    // =============================
+    // COIN
+    // =============================
 
     ctx.fillStyle = "gold";
 
@@ -452,26 +537,36 @@ function draw() {
 
 
     // =============================
-// FLAMEQIBLI PLAYER SPRITE
-// =============================
+    // FLAMEQIBLI PLAYER
+    // =============================
 
-const px = player.x - camera.x;
-const py = player.y - camera.y;
+    const px = player.x - camera.x;
+    const py = player.y - camera.y;
 
-// First frame of the DOWN/IDLE animation
-ctx.drawImage(
-    playerImage,
 
-    110, 97,     // part of sprite sheet to use
-    50, 115,
+    /*
+        Current working crop.
 
-    px - 12,
-    py - 35,
-    60,
-    100
-);
-    
+        We are keeping this exact crop
+        so the character doesn't show
+        the extra parts of the sprite sheet.
+    */
+
+    ctx.drawImage(
+        playerImage,
+
+        110,
+        97,
+        50,
+        115,
+
+        px - 12,
+        py - 35,
+        60,
+        100
+    );
 }
+
 
 // =============================
 // GAME LOOP
@@ -485,6 +580,7 @@ function gameLoop() {
 
     requestAnimationFrame(gameLoop);
 }
+
 
 gameLoop();
 
