@@ -665,68 +665,69 @@ function draw() {
     */
 
 
-    const imageWidth =
-        playerImage.naturalWidth;
+// =============================
+// FLAMEQIBLI SPRITE
+// =============================
 
-    const imageHeight =
-        playerImage.naturalHeight;
+// Exact grid positions from the sprite sheet
+const frameX = [
+    199,
+    478,
+    758,
+    1018
+];
 
+const frameY = [
+    233,
+    464,
+    690,
+    916
+];
 
-    /*
-        The actual character grid
-        begins below the title and
-        to the right of the direction
-        labels.
-    */
+const frameWidths = [
+    279,
+    280,
+    260,
+    254
+];
 
-    const gridX = imageWidth * 0.155;
-
-    const gridY = imageHeight * 0.145;
-
-    const gridWidth =
-        imageWidth - gridX;
-
-    const gridHeight =
-        imageHeight - gridY;
-
-
-    const frameWidth =
-        gridWidth / 4;
-
-    const frameHeight =
-        gridHeight / 4;
-
-
-    const sourceX =
-        gridX +
-        animationFrame * frameWidth;
-
-    const sourceY =
-        gridY +
-        currentDirection * frameHeight;
+const frameHeights = [
+    231,
+    226,
+    226,
+    232
+];
 
 
-    /*
-        Draw the selected frame.
-    */
+// Pick the current frame
+const sourceX = frameX[animationFrame];
+const sourceY = frameY[currentDirection];
 
-    ctx.drawImage(
+const sourceWidth = frameWidths[animationFrame];
+const sourceHeight = frameHeights[currentDirection];
 
-        playerImage,
 
-        sourceX,
-        sourceY,
+// Leave the grid borders out
+const cropX = sourceX + 25;
+const cropY = sourceY + 5;
+const cropWidth = sourceWidth - 50;
+const cropHeight = sourceHeight - 10;
 
-        frameWidth,
-        frameHeight,
 
-        px - 30,
-        py - 65,
+// Draw FlameQibli
+ctx.drawImage(
+    playerImage,
 
-        60,
-        100
-    );
+    cropX,
+    cropY,
+    cropWidth,
+    cropHeight,
 
+    px - 30,
+    py - 65,
+    60,
+    100
+);
 }
 
 
