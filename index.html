@@ -66,16 +66,26 @@ const player = {
     speed: 5
 };
 
+
+// =============================
+// PLAYER SPRITE
+// =============================
+
 const playerImage = new Image();
 playerImage.src = "player.png";
 
 
-// =============================
-// ANIMATION
-// =============================
+// Directions:
+// 0 = DOWN
+// 1 = LEFT
+// 2 = RIGHT
+// 3 = UP
+
+let currentDirection = 0;
 
 let animationFrame = 0;
 let animationTimer = 0;
+
 let isMoving = false;
 
 
@@ -96,11 +106,15 @@ const camera = {
 const keys = {};
 
 document.addEventListener("keydown", function(event) {
+
     keys[event.key.toLowerCase()] = true;
+
 });
 
 document.addEventListener("keyup", function(event) {
+
     keys[event.key.toLowerCase()] = false;
+
 });
 
 
@@ -126,6 +140,7 @@ const trees = [
     {x: 1000, y: 1500},
     {x: 1700, y: 1450}
 ];
+
 
 const rocks = [
     {x: 400, y: 1000},
@@ -193,7 +208,9 @@ function isBlocked(newX, newY) {
         newY < water.y + water.height &&
         newY + player.size > water.y
     ) {
+
         return true;
+
     }
 
 
@@ -211,6 +228,7 @@ function isBlocked(newX, newY) {
         if (rectangleCollision(playerBox, treeBox)) {
             return true;
         }
+
     }
 
 
@@ -228,6 +246,7 @@ function isBlocked(newX, newY) {
         if (rectangleCollision(playerBox, rockBox)) {
             return true;
         }
+
     }
 
     return false;
@@ -246,34 +265,58 @@ function update() {
     isMoving = false;
 
 
+    // =============================
     // UP
+    // =============================
 
     if (keys["w"] || keys["arrowup"]) {
+
         newY -= player.speed;
+
+        currentDirection = 3;
+
         isMoving = true;
     }
 
 
+    // =============================
     // DOWN
+    // =============================
 
     if (keys["s"] || keys["arrowdown"]) {
+
         newY += player.speed;
+
+        currentDirection = 0;
+
         isMoving = true;
     }
 
 
+    // =============================
     // LEFT
+    // =============================
 
     if (keys["a"] || keys["arrowleft"]) {
+
         newX -= player.speed;
+
+        currentDirection = 1;
+
         isMoving = true;
     }
 
 
+    // =============================
     // RIGHT
+    // =============================
 
     if (keys["d"] || keys["arrowright"]) {
+
         newX += player.speed;
+
+        currentDirection = 2;
+
         isMoving = true;
     }
 
@@ -283,11 +326,15 @@ function update() {
     // =============================
 
     if (!isBlocked(newX, player.y)) {
+
         player.x = newX;
+
     }
 
     if (!isBlocked(player.x, newY)) {
+
         player.y = newY;
+
     }
 
 
@@ -297,12 +344,18 @@ function update() {
 
     player.x = Math.max(
         0,
-        Math.min(worldWidth - player.size, player.x)
+        Math.min(
+            worldWidth - player.size,
+            player.x
+        )
     );
 
     player.y = Math.max(
         0,
-        Math.min(worldHeight - player.size, player.y)
+        Math.min(
+            worldHeight - player.size,
+            player.y
+        )
     );
 
 
@@ -314,21 +367,26 @@ function update() {
 
         animationTimer++;
 
-        if (animationTimer >= 10) {
+        if (animationTimer >= 8) {
 
             animationFrame++;
 
             animationTimer = 0;
 
-            if (animationFrame >= 2) {
+            if (animationFrame >= 4) {
+
                 animationFrame = 0;
+
             }
+
         }
 
     } else {
 
         animationFrame = 0;
+
         animationTimer = 0;
+
     }
 
 
@@ -347,8 +405,15 @@ function update() {
 
         document.getElementById("score").textContent = score;
 
-        coin.x = 100 + Math.random() * (worldWidth - 200);
-        coin.y = 100 + Math.random() * (worldHeight - 200);
+        coin.x =
+            100 +
+            Math.random() *
+            (worldWidth - 200);
+
+        coin.y =
+            100 +
+            Math.random() *
+            (worldHeight - 200);
     }
 
 
@@ -356,19 +421,31 @@ function update() {
     // CAMERA
     // =============================
 
-    camera.x = player.x - canvas.width / 2;
-    camera.y = player.y - canvas.height / 2;
+    camera.x =
+        player.x -
+        canvas.width / 2;
+
+    camera.y =
+        player.y -
+        canvas.height / 2;
 
 
     camera.x = Math.max(
         0,
-        Math.min(worldWidth - canvas.width, camera.x)
+        Math.min(
+            worldWidth - canvas.width,
+            camera.x
+        )
     );
 
     camera.y = Math.max(
         0,
-        Math.min(worldHeight - canvas.height, camera.y)
+        Math.min(
+            worldHeight - canvas.height,
+            camera.y
+        )
     );
+
 }
 
 
@@ -404,7 +481,9 @@ function draw() {
     // GRID
     // =============================
 
-    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.strokeStyle =
+        "rgba(255,255,255,0.08)";
+
     ctx.lineWidth = 1;
 
 
@@ -417,9 +496,14 @@ function draw() {
         ctx.beginPath();
 
         ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
+
+        ctx.lineTo(
+            x,
+            canvas.height
+        );
 
         ctx.stroke();
+
     }
 
 
@@ -432,9 +516,14 @@ function draw() {
         ctx.beginPath();
 
         ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
+
+        ctx.lineTo(
+            canvas.width,
+            y
+        );
 
         ctx.stroke();
+
     }
 
 
@@ -458,8 +547,11 @@ function draw() {
 
     for (const tree of trees) {
 
-        const x = tree.x - camera.x;
-        const y = tree.y - camera.y;
+        const x =
+            tree.x - camera.x;
+
+        const y =
+            tree.y - camera.y;
 
 
         // Trunk
@@ -489,6 +581,7 @@ function draw() {
         );
 
         ctx.fill();
+
     }
 
 
@@ -498,8 +591,12 @@ function draw() {
 
     for (const rock of rocks) {
 
-        const x = rock.x - camera.x;
-        const y = rock.y - camera.y;
+        const x =
+            rock.x - camera.x;
+
+        const y =
+            rock.y - camera.y;
+
 
         ctx.fillStyle = "#777";
 
@@ -514,6 +611,7 @@ function draw() {
         );
 
         ctx.fill();
+
     }
 
 
@@ -526,9 +624,16 @@ function draw() {
     ctx.beginPath();
 
     ctx.arc(
-        coin.x - camera.x + coin.size / 2,
-        coin.y - camera.y + coin.size / 2,
+        coin.x -
+            camera.x +
+            coin.size / 2,
+
+        coin.y -
+            camera.y +
+            coin.size / 2,
+
         coin.size / 2,
+
         0,
         Math.PI * 2
     );
@@ -537,34 +642,91 @@ function draw() {
 
 
     // =============================
-    // FLAMEQIBLI PLAYER
+    // FLAMEQIBLI SPRITE
     // =============================
 
-    const px = player.x - camera.x;
-    const py = player.y - camera.y;
+    const px =
+        player.x - camera.x;
+
+    const py =
+        player.y - camera.y;
 
 
     /*
-        Current working crop.
+        The new sprite sheet has:
 
-        We are keeping this exact crop
-        so the character doesn't show
-        the extra parts of the sprite sheet.
+        4 columns = animation frames
+        4 rows    = directions
+
+        Row 0 = Down
+        Row 1 = Left
+        Row 2 = Right
+        Row 3 = Up
+    */
+
+
+    const imageWidth =
+        playerImage.naturalWidth;
+
+    const imageHeight =
+        playerImage.naturalHeight;
+
+
+    /*
+        The actual character grid
+        begins below the title and
+        to the right of the direction
+        labels.
+    */
+
+    const gridX = imageWidth * 0.155;
+
+    const gridY = imageHeight * 0.145;
+
+    const gridWidth =
+        imageWidth - gridX;
+
+    const gridHeight =
+        imageHeight - gridY;
+
+
+    const frameWidth =
+        gridWidth / 4;
+
+    const frameHeight =
+        gridHeight / 4;
+
+
+    const sourceX =
+        gridX +
+        animationFrame * frameWidth;
+
+    const sourceY =
+        gridY +
+        currentDirection * frameHeight;
+
+
+    /*
+        Draw the selected frame.
     */
 
     ctx.drawImage(
+
         playerImage,
 
-        110,
-        97,
-        50,
-        115,
+        sourceX,
+        sourceY,
 
-        px - 12,
-        py - 35,
+        frameWidth,
+        frameHeight,
+
+        px - 30,
+        py - 65,
+
         60,
         100
     );
+
 }
 
 
@@ -578,9 +740,16 @@ function gameLoop() {
 
     draw();
 
-    requestAnimationFrame(gameLoop);
+    requestAnimationFrame(
+        gameLoop
+    );
+
 }
 
+
+// =============================
+// START GAME
+// =============================
 
 gameLoop();
 
