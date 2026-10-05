@@ -47,39 +47,42 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 
-// =============================
+// ==================================================
 // WORLD
-// =============================
+// ==================================================
 
 const worldWidth = 2400;
 const worldHeight = 1800;
 
 
-// =============================
+// ==================================================
 // PLAYER
-// =============================
+// ==================================================
 
 const player = {
     x: 1200,
     y: 900,
+
+    // Visual size is separate from collision size
     size: 36,
+
     speed: 5
 };
 
 
-// =============================
+// ==================================================
 // PLAYER SPRITE
-// =============================
+// ==================================================
 
 const playerImage = new Image();
 playerImage.src = "player.png";
 
 
-// Directions:
-// 0 = DOWN
-// 1 = LEFT
-// 2 = RIGHT
-// 3 = UP
+// Direction:
+// 0 = Down
+// 1 = Left
+// 2 = Right
+// 3 = Up
 
 let currentDirection = 0;
 
@@ -89,9 +92,25 @@ let animationTimer = 0;
 let isMoving = false;
 
 
-// =============================
+// ==================================================
+// PLAYER HITBOX
+// ==================================================
+//
+// This is smaller than the visible character.
+// It represents FlameQibli's feet/body area.
+//
+
+const playerHitbox = {
+    offsetX: 8,
+    offsetY: 18,
+    width: 20,
+    height: 17
+};
+
+
+// ==================================================
 // CAMERA
-// =============================
+// ==================================================
 
 const camera = {
     x: 0,
@@ -99,9 +118,9 @@ const camera = {
 };
 
 
-// =============================
+// ==================================================
 // CONTROLS
-// =============================
+// ==================================================
 
 const keys = {};
 
@@ -118,16 +137,16 @@ document.addEventListener("keyup", function(event) {
 });
 
 
-// =============================
+// ==================================================
 // SCORE
-// =============================
+// ==================================================
 
 let score = 0;
 
 
-// =============================
-// OBJECTS
-// =============================
+// ==================================================
+// TREES
+// ==================================================
 
 const trees = [
     {x: 300, y: 300},
@@ -142,6 +161,10 @@ const trees = [
 ];
 
 
+// ==================================================
+// ROCKS
+// ==================================================
+
 const rocks = [
     {x: 400, y: 1000},
     {x: 700, y: 1200},
@@ -151,9 +174,9 @@ const rocks = [
 ];
 
 
-// =============================
+// ==================================================
 // WATER
-// =============================
+// ==================================================
 
 const water = {
     x: 1450,
@@ -163,9 +186,9 @@ const water = {
 };
 
 
-// =============================
+// ==================================================
 // COIN
-// =============================
+// ==================================================
 
 const coin = {
     x: 1400,
@@ -174,9 +197,9 @@ const coin = {
 };
 
 
-// =============================
-// COLLISION
-// =============================
+// ==================================================
+// RECTANGLE COLLISION
+// ==================================================
 
 function rectangleCollision(a, b) {
 
@@ -190,23 +213,68 @@ function rectangleCollision(a, b) {
 }
 
 
-function isBlocked(newX, newY) {
+// ==================================================
+// CIRCLE / RECTANGLE COLLISION
+// ==================================================
 
-    const playerBox = {
-        x: newX,
-        y: newY,
-        width: player.size,
-        height: player.size
+function circleRectangleCollision(circle, rect) {
+
+    const closestX = Math.max(
+        rect.x,
+        Math.min(circle.x, rect.x + rect.width)
+    );
+
+    const closestY = Math.max(
+        rect.y,
+        Math.min(circle.y, rect.y + rect.height)
+    );
+
+    const distanceX = circle.x - closestX;
+    const distanceY = circle.y - closestY;
+
+    return (
+        distanceX * distanceX +
+        distanceY * distanceY
+    ) < circle.radius * circle.radius;
+
+}
+
+
+// ==================================================
+// GET PLAYER HITBOX
+// ==================================================
+
+function getPlayerHitbox(x, y) {
+
+    return {
+        x: x + playerHitbox.offsetX,
+        y: y + playerHitbox.offsetY,
+        width: playerHitbox.width,
+        height: playerHitbox.height
     };
 
+}
 
+
+// ==================================================
+// CHECK IF PLAYER IS BLOCKED
+// ==================================================
+
+function isBlocked(newX, newY) {
+
+    const hitbox =
+        getPlayerHitbox(newX, newY);
+
+
+    // ----------------------------------------------
     // WATER
+    // ----------------------------------------------
 
     if (
-        newX < water.x + water.width &&
-        newX + player.size > water.x &&
-        newY < water.y + water.height &&
-        newY + player.size > water.y
+        rectangleCollision(
+            hitbox,
+            water
+        )
     ) {
 
         return true;
@@ -214,48 +282,206 @@ function isBlocked(newX, newY) {
     }
 
 
+    // ----------------------------------------------
     // TREES
+    // ----------------------------------------------
+    //
+    // Only the trunk is solid.
+    // The leaves don't block the player.
+    //
 
     for (const tree of trees) {
 
-        const treeBox = {
-            x: tree.x - 20,
-            y: tree.y - 20,
-            width: 40,
-            height: 40
+        const trunk = {
+            x: tree.x - 8,
+            y: tree.y,
+            width: 16,
+            height: 25
         };
 
-        if (rectangleCollision(playerBox, treeBox)) {
+        if (
+            rectangleCollision(
+                hitbox,
+                trunk
+            )
+        ) {
+
             return true;
+
         }
 
     }
 
 
+    // ----------------------------------------------
     // ROCKS
+    // ----------------------------------------------
 
     for (const rock of rocks) {
 
-        const rockBox = {
-            x: rock.x - 18,
-            y: rock.y - 18,
-            width: 36,
-            height: 36
+        const rockCircle = {
+            x: rock.x,
+            y: rock.y,
+            radius: 15
         };
 
-        if (rectangleCollision(playerBox, rockBox)) {
+        if (
+            circleRectangleCollision(
+                rockCircle,
+                hitbox
+            )
+        ) {
+
             return true;
+
         }
 
     }
 
+
     return false;
+
 }
 
 
-// =============================
+// ==================================================
+// CHECK IF COIN LOCATION IS VALID
+// ==================================================
+
+function isValidCoinPosition(x, y) {
+
+    const coinBox = {
+        x: x,
+        y: y,
+        width: coin.size,
+        height: coin.size
+    };
+
+
+    // ----------------------------------------------
+    // DON'T SPAWN IN WATER
+    // ----------------------------------------------
+
+    if (
+        rectangleCollision(
+            coinBox,
+            water
+        )
+    ) {
+
+        return false;
+
+    }
+
+
+    // ----------------------------------------------
+    // DON'T SPAWN ON TREES
+    // ----------------------------------------------
+
+    for (const tree of trees) {
+
+        const trunk = {
+            x: tree.x - 12,
+            y: tree.y - 5,
+            width: 24,
+            height: 35
+        };
+
+        if (
+            rectangleCollision(
+                coinBox,
+                trunk
+            )
+        ) {
+
+            return false;
+
+        }
+
+    }
+
+
+    // ----------------------------------------------
+    // DON'T SPAWN ON ROCKS
+    // ----------------------------------------------
+
+    for (const rock of rocks) {
+
+        const rockCircle = {
+            x: rock.x,
+            y: rock.y,
+            radius: 20
+        };
+
+        if (
+            circleRectangleCollision(
+                rockCircle,
+                coinBox
+            )
+        ) {
+
+            return false;
+
+        }
+
+    }
+
+
+    return true;
+
+}
+
+
+// ==================================================
+// SPAWN COIN
+// ==================================================
+
+function spawnCoin() {
+
+    let attempts = 0;
+
+    while (attempts < 100) {
+
+        const newX =
+            100 +
+            Math.random() *
+            (worldWidth - 200);
+
+        const newY =
+            100 +
+            Math.random() *
+            (worldHeight - 200);
+
+
+        if (
+            isValidCoinPosition(
+                newX,
+                newY
+            )
+        ) {
+
+            coin.x = newX;
+            coin.y = newY;
+
+            return;
+
+        }
+
+        attempts++;
+
+    }
+
+
+    // Safe fallback location
+    coin.x = 200;
+    coin.y = 200;
+
+}
+
+
+// ==================================================
 // UPDATE
-// =============================
+// ==================================================
 
 function update() {
 
@@ -265,82 +491,111 @@ function update() {
     isMoving = false;
 
 
-    // =============================
+    // ----------------------------------------------
     // UP
-    // =============================
+    // ----------------------------------------------
 
-    if (keys["w"] || keys["arrowup"]) {
+    if (
+        keys["w"] ||
+        keys["arrowup"]
+    ) {
 
         newY -= player.speed;
 
         currentDirection = 3;
 
         isMoving = true;
+
     }
 
 
-    // =============================
+    // ----------------------------------------------
     // DOWN
-    // =============================
+    // ----------------------------------------------
 
-    if (keys["s"] || keys["arrowdown"]) {
+    if (
+        keys["s"] ||
+        keys["arrowdown"]
+    ) {
 
         newY += player.speed;
 
         currentDirection = 0;
 
         isMoving = true;
+
     }
 
 
-    // =============================
+    // ----------------------------------------------
     // LEFT
-    // =============================
+    // ----------------------------------------------
 
-    if (keys["a"] || keys["arrowleft"]) {
+    if (
+        keys["a"] ||
+        keys["arrowleft"]
+    ) {
 
         newX -= player.speed;
 
         currentDirection = 1;
 
         isMoving = true;
+
     }
 
 
-    // =============================
+    // ----------------------------------------------
     // RIGHT
-    // =============================
+    // ----------------------------------------------
 
-    if (keys["d"] || keys["arrowright"]) {
+    if (
+        keys["d"] ||
+        keys["arrowright"]
+    ) {
 
         newX += player.speed;
 
         currentDirection = 2;
 
         isMoving = true;
+
     }
 
 
-    // =============================
+    // ==================================================
     // COLLISION
-    // =============================
+    // ==================================================
 
-    if (!isBlocked(newX, player.y)) {
+    // X movement
+    if (
+        !isBlocked(
+            newX,
+            player.y
+        )
+    ) {
 
         player.x = newX;
 
     }
 
-    if (!isBlocked(player.x, newY)) {
+
+    // Y movement
+    if (
+        !isBlocked(
+            player.x,
+            newY
+        )
+    ) {
 
         player.y = newY;
 
     }
 
 
-    // =============================
+    // ==================================================
     // WORLD BOUNDARIES
-    // =============================
+    // ==================================================
 
     player.x = Math.max(
         0,
@@ -359,21 +614,25 @@ function update() {
     );
 
 
-    // =============================
+    // ==================================================
     // ANIMATION
-    // =============================
+    // ==================================================
 
     if (isMoving) {
 
         animationTimer++;
 
-        if (animationTimer >= 8) {
+        if (
+            animationTimer >= 8
+        ) {
 
             animationFrame++;
 
             animationTimer = 0;
 
-            if (animationFrame >= 4) {
+            if (
+                animationFrame >= 4
+            ) {
 
                 animationFrame = 0;
 
@@ -384,42 +643,51 @@ function update() {
     } else {
 
         animationFrame = 0;
-
         animationTimer = 0;
 
     }
 
 
-    // =============================
-    // COIN
-    // =============================
+    // ==================================================
+    // COIN COLLISION
+    // ==================================================
+
+    const playerBox =
+        getPlayerHitbox(
+            player.x,
+            player.y
+        );
+
+
+    const coinBox = {
+        x: coin.x,
+        y: coin.y,
+        width: coin.size,
+        height: coin.size
+    };
+
 
     if (
-        player.x < coin.x + coin.size &&
-        player.x + player.size > coin.x &&
-        player.y < coin.y + coin.size &&
-        player.y + player.size > coin.y
+        rectangleCollision(
+            playerBox,
+            coinBox
+        )
     ) {
 
         score++;
 
-        document.getElementById("score").textContent = score;
+        document.getElementById(
+            "score"
+        ).textContent = score;
 
-        coin.x =
-            100 +
-            Math.random() *
-            (worldWidth - 200);
+        spawnCoin();
 
-        coin.y =
-            100 +
-            Math.random() *
-            (worldHeight - 200);
     }
 
 
-    // =============================
+    // ==================================================
     // CAMERA
-    // =============================
+    // ==================================================
 
     camera.x =
         player.x -
@@ -433,7 +701,8 @@ function update() {
     camera.x = Math.max(
         0,
         Math.min(
-            worldWidth - canvas.width,
+            worldWidth -
+            canvas.width,
             camera.x
         )
     );
@@ -441,7 +710,8 @@ function update() {
     camera.y = Math.max(
         0,
         Math.min(
-            worldHeight - canvas.height,
+            worldHeight -
+            canvas.height,
             camera.y
         )
     );
@@ -449,9 +719,9 @@ function update() {
 }
 
 
-// =============================
+// ==================================================
 // DRAW
-// =============================
+// ==================================================
 
 function draw() {
 
@@ -463,9 +733,9 @@ function draw() {
     );
 
 
-    // =============================
+    // ==================================================
     // GRASS
-    // =============================
+    // ==================================================
 
     ctx.fillStyle = "#4caf50";
 
@@ -477,9 +747,9 @@ function draw() {
     );
 
 
-    // =============================
+    // ==================================================
     // GRID
-    // =============================
+    // ==================================================
 
     ctx.strokeStyle =
         "rgba(255,255,255,0.08)";
@@ -527,9 +797,9 @@ function draw() {
     }
 
 
-    // =============================
+    // ==================================================
     // WATER
-    // =============================
+    // ==================================================
 
     ctx.fillStyle = "#2389da";
 
@@ -541,9 +811,9 @@ function draw() {
     );
 
 
-    // =============================
+    // ==================================================
     // TREES
-    // =============================
+    // ==================================================
 
     for (const tree of trees) {
 
@@ -556,7 +826,8 @@ function draw() {
 
         // Trunk
 
-        ctx.fillStyle = "#7b4a24";
+        ctx.fillStyle =
+            "#7b4a24";
 
         ctx.fillRect(
             x - 7,
@@ -568,7 +839,8 @@ function draw() {
 
         // Leaves
 
-        ctx.fillStyle = "#176b2c";
+        ctx.fillStyle =
+            "#176b2c";
 
         ctx.beginPath();
 
@@ -585,9 +857,9 @@ function draw() {
     }
 
 
-    // =============================
+    // ==================================================
     // ROCKS
-    // =============================
+    // ==================================================
 
     for (const rock of rocks) {
 
@@ -598,7 +870,8 @@ function draw() {
             rock.y - camera.y;
 
 
-        ctx.fillStyle = "#777";
+        ctx.fillStyle =
+            "#777";
 
         ctx.beginPath();
 
@@ -615,9 +888,9 @@ function draw() {
     }
 
 
-    // =============================
+    // ==================================================
     // COIN
-    // =============================
+    // ==================================================
 
     ctx.fillStyle = "gold";
 
@@ -625,12 +898,12 @@ function draw() {
 
     ctx.arc(
         coin.x -
-            camera.x +
-            coin.size / 2,
+        camera.x +
+        coin.size / 2,
 
         coin.y -
-            camera.y +
-            coin.size / 2,
+        camera.y +
+        coin.size / 2,
 
         coin.size / 2,
 
@@ -641,9 +914,9 @@ function draw() {
     ctx.fill();
 
 
-    // =============================
+    // ==================================================
     // FLAMEQIBLI SPRITE
-    // =============================
+    // ==================================================
 
     const px =
         player.x - camera.x;
@@ -653,87 +926,108 @@ function draw() {
 
 
     /*
-        The new sprite sheet has:
+        The character grid begins at approximately:
 
-        4 columns = animation frames
-        4 rows    = directions
+        X = 200
+        Y = 230
 
-        Row 0 = Down
-        Row 1 = Left
-        Row 2 = Right
-        Row 3 = Up
+        There are 4 columns and 4 rows.
+
+        We crop INSIDE each cell so that
+        the blue/purple cell borders don't
+        appear around the character.
     */
 
 
-// =============================
-// FLAMEQIBLI SPRITE
-// =============================
+    const cellWidth = 269;
+    const cellHeight = 230;
 
-// Exact grid positions from the sprite sheet
-const frameX = [
-    199,
-    478,
-    758,
-    1018
-];
-
-const frameY = [
-    233,
-    464,
-    690,
-    916
-];
-
-const frameWidths = [
-    279,
-    280,
-    260,
-    254
-];
-
-const frameHeights = [
-    231,
-    226,
-    226,
-    232
-];
+    const gridX = 200;
+    const gridY = 230;
 
 
-// Pick the current frame
-const sourceX = frameX[animationFrame];
-const sourceY = frameY[currentDirection];
+    const cellX =
+        gridX +
+        animationFrame * cellWidth;
 
-const sourceWidth = frameWidths[animationFrame];
-const sourceHeight = frameHeights[currentDirection];
-
-
-// Leave the grid borders out
-const cropX = sourceX + 25;
-const cropY = sourceY + 5;
-const cropWidth = sourceWidth - 50;
-const cropHeight = sourceHeight - 10;
+    const cellY =
+        gridY +
+        currentDirection * cellHeight;
 
 
-// Draw FlameQibli
-ctx.drawImage(
-    playerImage,
+    // Extra padding removes the cell borders
 
-    cropX,
-    cropY,
-    cropWidth,
-    cropHeight,
+    const paddingX = 18;
+    const paddingY = 12;
 
-    px - 30,
-    py - 60,
-    60,
-    95
-);
+
+    const sourceX =
+        cellX + paddingX;
+
+    const sourceY =
+        cellY + paddingY;
+
+    const sourceWidth =
+        cellWidth -
+        paddingX * 2;
+
+    const sourceHeight =
+        cellHeight -
+        paddingY * 2;
+
+
+    // Draw character
+
+    ctx.drawImage(
+
+        playerImage,
+
+        sourceX,
+        sourceY,
+
+        sourceWidth,
+        sourceHeight,
+
+        px - 30,
+        py - 65,
+
+        60,
+        100
+    );
+
+
+    /*
+        DEBUG HITBOX
+
+        Leave this commented out normally.
+
+        To see the player's collision box,
+        remove the // from the next lines.
+
+    */
+
+    /*
+    const debugBox =
+        getPlayerHitbox(
+            player.x,
+            player.y
+        );
+
+    ctx.strokeStyle = "red";
+    ctx.strokeRect(
+        debugBox.x - camera.x,
+        debugBox.y - camera.y,
+        debugBox.width,
+        debugBox.height
+    );
+    */
+
 }
 
 
-// =============================
+// ==================================================
 // GAME LOOP
-// =============================
+// ==================================================
 
 function gameLoop() {
 
@@ -748,9 +1042,9 @@ function gameLoop() {
 }
 
 
-// =============================
-// START GAME
-// =============================
+// ==================================================
+// START
+// ==================================================
 
 gameLoop();
 
