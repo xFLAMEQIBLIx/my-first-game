@@ -172,8 +172,104 @@ const rocks = [
     {x: 1800, y: 1100},
     {x: 1200, y: 1400}
 ];
+// ==================================================
+// VILLAGE HOUSES
+// ==================================================
 
+const houses = [
+    {
+        x: 850,
+        y: 700,
+        width: 180,
+        height: 130
+    },
 
+    {
+        x: 1100,
+        y: 600,
+        width: 180,
+        height: 130
+    },
+
+    {
+        x: 850,
+        y: 1000,
+        width: 180,
+        height: 130
+    }
+];
+
+// ==================================================
+// VILLAGE HOUSES
+// ==================================================
+
+for (const house of houses) {
+
+    const x = house.x - camera.x;
+    const y = house.y - camera.y;
+
+    // House body
+    ctx.fillStyle = "#d88945";
+
+    ctx.fillRect(
+        x,
+        y,
+        house.width,
+        house.height
+    );
+
+    // Roof
+    ctx.fillStyle = "#8b2f2f";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        x - 15,
+        y
+    );
+
+    ctx.lineTo(
+        x + house.width / 2,
+        y - 70
+    );
+
+    ctx.lineTo(
+        x + house.width + 15,
+        y
+    );
+
+    ctx.closePath();
+
+    ctx.fill();
+
+    // Door
+    ctx.fillStyle = "#5a321f";
+
+    ctx.fillRect(
+        x + house.width / 2 - 20,
+        y + house.height - 55,
+        40,
+        55
+    );
+
+    // Window
+    ctx.fillStyle = "#72d6ff";
+
+    ctx.fillRect(
+        x + 25,
+        y + 35,
+        35,
+        35
+    );
+
+    ctx.fillRect(
+        x + house.width - 60,
+        y + 35,
+        35,
+        35
+    );
+}
+    
 // ==================================================
 // WATER
 // ==================================================
@@ -282,6 +378,31 @@ function isBlocked(newX, newY) {
     }
 
 
+// ----------------------------------------------
+// HOUSES
+// ----------------------------------------------
+
+for (const house of houses) {
+
+    const houseHitbox = {
+        x: house.x,
+        y: house.y,
+        width: house.width,
+        height: house.height
+    };
+
+    if (
+        rectangleCollision(
+            hitbox,
+            houseHitbox
+        )
+    ) {
+
+        return true;
+
+    }
+}
+    
     // ----------------------------------------------
     // TREES
     // ----------------------------------------------
