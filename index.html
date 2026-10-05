@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -56,16 +57,22 @@ const worldHeight = 1800;
 
 
 // ==================================================
+// DEBUG
+// ==================================================
+
+// Change this to true if you want to SEE collision boxes.
+
+const SHOW_HITBOXES = false;
+
+
+// ==================================================
 // PLAYER
 // ==================================================
 
 const player = {
     x: 1200,
     y: 900,
-
-    // Visual size is separate from collision size
     size: 36,
-
     speed: 5
 };
 
@@ -95,10 +102,6 @@ let isMoving = false;
 // ==================================================
 // PLAYER HITBOX
 // ==================================================
-//
-// This is smaller than the visible character.
-// It represents FlameQibli's feet/body area.
-//
 
 const playerHitbox = {
     offsetX: 8,
@@ -172,6 +175,8 @@ const rocks = [
     {x: 1800, y: 1100},
     {x: 1200, y: 1400}
 ];
+
+
 // ==================================================
 // VILLAGE HOUSES
 // ==================================================
@@ -199,77 +204,7 @@ const houses = [
     }
 ];
 
-// ==================================================
-// VILLAGE HOUSES
-// ==================================================
 
-for (const house of houses) {
-
-    const x = house.x - camera.x;
-    const y = house.y - camera.y;
-
-    // House body
-    ctx.fillStyle = "#d88945";
-
-    ctx.fillRect(
-        x,
-        y,
-        house.width,
-        house.height
-    );
-
-    // Roof
-    ctx.fillStyle = "#8b2f2f";
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        x - 15,
-        y
-    );
-
-    ctx.lineTo(
-        x + house.width / 2,
-        y - 70
-    );
-
-    ctx.lineTo(
-        x + house.width + 15,
-        y
-    );
-
-    ctx.closePath();
-
-    ctx.fill();
-
-    // Door
-    ctx.fillStyle = "#5a321f";
-
-    ctx.fillRect(
-        x + house.width / 2 - 20,
-        y + house.height - 55,
-        40,
-        55
-    );
-
-    // Window
-    ctx.fillStyle = "#72d6ff";
-
-    ctx.fillRect(
-        x + 25,
-        y + 35,
-        35,
-        35
-    );
-
-    ctx.fillRect(
-        x + house.width - 60,
-        y + 35,
-        35,
-        35
-    );
-}
-    
 // ==================================================
 // WATER
 // ==================================================
@@ -358,58 +293,41 @@ function getPlayerHitbox(x, y) {
 
 function isBlocked(newX, newY) {
 
-    const hitbox =
-        getPlayerHitbox(newX, newY);
+    const hitbox = getPlayerHitbox(newX, newY);
 
 
     // ----------------------------------------------
     // WATER
     // ----------------------------------------------
 
-    if (
-        rectangleCollision(
-            hitbox,
-            water
-        )
-    ) {
-
+    if (rectangleCollision(hitbox, water)) {
         return true;
+    }
+
+
+    // ----------------------------------------------
+    // HOUSES
+    // ----------------------------------------------
+
+    for (const house of houses) {
+
+        const houseHitbox = {
+            x: house.x,
+            y: house.y,
+            width: house.width,
+            height: house.height
+        };
+
+        if (rectangleCollision(hitbox, houseHitbox)) {
+            return true;
+        }
 
     }
 
 
-// ----------------------------------------------
-// HOUSES
-// ----------------------------------------------
-
-for (const house of houses) {
-
-    const houseHitbox = {
-        x: house.x,
-        y: house.y,
-        width: house.width,
-        height: house.height
-    };
-
-    if (
-        rectangleCollision(
-            hitbox,
-            houseHitbox
-        )
-    ) {
-
-        return true;
-
-    }
-}
-    
     // ----------------------------------------------
     // TREES
     // ----------------------------------------------
-    //
-    // Only the trunk is solid.
-    // The leaves don't block the player.
-    //
 
     for (const tree of trees) {
 
@@ -420,15 +338,8 @@ for (const house of houses) {
             height: 25
         };
 
-        if (
-            rectangleCollision(
-                hitbox,
-                trunk
-            )
-        ) {
-
+        if (rectangleCollision(hitbox, trunk)) {
             return true;
-
         }
 
     }
@@ -446,15 +357,8 @@ for (const house of houses) {
             radius: 15
         };
 
-        if (
-            circleRectangleCollision(
-                rockCircle,
-                hitbox
-            )
-        ) {
-
+        if (circleRectangleCollision(rockCircle, hitbox)) {
             return true;
-
         }
 
     }
@@ -483,14 +387,27 @@ function isValidCoinPosition(x, y) {
     // DON'T SPAWN IN WATER
     // ----------------------------------------------
 
-    if (
-        rectangleCollision(
-            coinBox,
-            water
-        )
-    ) {
-
+    if (rectangleCollision(coinBox, water)) {
         return false;
+    }
+
+
+    // ----------------------------------------------
+    // DON'T SPAWN INSIDE HOUSES
+    // ----------------------------------------------
+
+    for (const house of houses) {
+
+        const houseBox = {
+            x: house.x,
+            y: house.y,
+            width: house.width,
+            height: house.height
+        };
+
+        if (rectangleCollision(coinBox, houseBox)) {
+            return false;
+        }
 
     }
 
@@ -508,15 +425,8 @@ function isValidCoinPosition(x, y) {
             height: 35
         };
 
-        if (
-            rectangleCollision(
-                coinBox,
-                trunk
-            )
-        ) {
-
+        if (rectangleCollision(coinBox, trunk)) {
             return false;
-
         }
 
     }
@@ -534,15 +444,8 @@ function isValidCoinPosition(x, y) {
             radius: 20
         };
 
-        if (
-            circleRectangleCollision(
-                rockCircle,
-                coinBox
-            )
-        ) {
-
+        if (circleRectangleCollision(rockCircle, coinBox)) {
             return false;
-
         }
 
     }
@@ -573,13 +476,7 @@ function spawnCoin() {
             Math.random() *
             (worldHeight - 200);
 
-
-        if (
-            isValidCoinPosition(
-                newX,
-                newY
-            )
-        ) {
+        if (isValidCoinPosition(newX, newY)) {
 
             coin.x = newX;
             coin.y = newY;
@@ -593,7 +490,8 @@ function spawnCoin() {
     }
 
 
-    // Safe fallback location
+    // Safe fallback
+
     coin.x = 200;
     coin.y = 200;
 
@@ -616,10 +514,7 @@ function update() {
     // UP
     // ----------------------------------------------
 
-    if (
-        keys["w"] ||
-        keys["arrowup"]
-    ) {
+    if (keys["w"] || keys["arrowup"]) {
 
         newY -= player.speed;
 
@@ -634,10 +529,7 @@ function update() {
     // DOWN
     // ----------------------------------------------
 
-    if (
-        keys["s"] ||
-        keys["arrowdown"]
-    ) {
+    if (keys["s"] || keys["arrowdown"]) {
 
         newY += player.speed;
 
@@ -652,10 +544,7 @@ function update() {
     // LEFT
     // ----------------------------------------------
 
-    if (
-        keys["a"] ||
-        keys["arrowleft"]
-    ) {
+    if (keys["a"] || keys["arrowleft"]) {
 
         newX -= player.speed;
 
@@ -670,10 +559,7 @@ function update() {
     // RIGHT
     // ----------------------------------------------
 
-    if (
-        keys["d"] ||
-        keys["arrowright"]
-    ) {
+    if (keys["d"] || keys["arrowright"]) {
 
         newX += player.speed;
 
@@ -689,28 +575,16 @@ function update() {
     // ==================================================
 
     // X movement
-    if (
-        !isBlocked(
-            newX,
-            player.y
-        )
-    ) {
 
+    if (!isBlocked(newX, player.y)) {
         player.x = newX;
-
     }
 
 
     // Y movement
-    if (
-        !isBlocked(
-            player.x,
-            newY
-        )
-    ) {
 
+    if (!isBlocked(player.x, newY)) {
         player.y = newY;
-
     }
 
 
@@ -743,20 +617,14 @@ function update() {
 
         animationTimer++;
 
-        if (
-            animationTimer >= 8
-        ) {
+        if (animationTimer >= 8) {
 
             animationFrame++;
 
             animationTimer = 0;
 
-            if (
-                animationFrame >= 4
-            ) {
-
+            if (animationFrame >= 4) {
                 animationFrame = 0;
-
             }
 
         }
@@ -779,7 +647,6 @@ function update() {
             player.y
         );
 
-
     const coinBox = {
         x: coin.x,
         y: coin.y,
@@ -787,19 +654,11 @@ function update() {
         height: coin.size
     };
 
-
-    if (
-        rectangleCollision(
-            playerBox,
-            coinBox
-        )
-    ) {
+    if (rectangleCollision(playerBox, coinBox)) {
 
         score++;
 
-        document.getElementById(
-            "score"
-        ).textContent = score;
+        document.getElementById("score").textContent = score;
 
         spawnCoin();
 
@@ -822,8 +681,7 @@ function update() {
     camera.x = Math.max(
         0,
         Math.min(
-            worldWidth -
-            canvas.width,
+            worldWidth - canvas.width,
             camera.x
         )
     );
@@ -831,8 +689,7 @@ function update() {
     camera.y = Math.max(
         0,
         Math.min(
-            worldHeight -
-            canvas.height,
+            worldHeight - canvas.height,
             camera.y
         )
     );
@@ -933,22 +790,104 @@ function draw() {
 
 
     // ==================================================
+    // VILLAGE HOUSES
+    // ==================================================
+    //
+    // IMPORTANT:
+    // Houses MUST be drawn inside draw()
+    // so they are redrawn every frame.
+    //
+
+    for (const house of houses) {
+
+        const x = house.x - camera.x;
+        const y = house.y - camera.y;
+
+
+        // House body
+
+        ctx.fillStyle = "#d88945";
+
+        ctx.fillRect(
+            x,
+            y,
+            house.width,
+            house.height
+        );
+
+
+        // Roof
+
+        ctx.fillStyle = "#8b2f2f";
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            x - 15,
+            y
+        );
+
+        ctx.lineTo(
+            x + house.width / 2,
+            y - 70
+        );
+
+        ctx.lineTo(
+            x + house.width + 15,
+            y
+        );
+
+        ctx.closePath();
+
+        ctx.fill();
+
+
+        // Door
+
+        ctx.fillStyle = "#5a321f";
+
+        ctx.fillRect(
+            x + house.width / 2 - 20,
+            y + house.height - 55,
+            40,
+            55
+        );
+
+
+        // Windows
+
+        ctx.fillStyle = "#72d6ff";
+
+        ctx.fillRect(
+            x + 25,
+            y + 35,
+            35,
+            35
+        );
+
+        ctx.fillRect(
+            x + house.width - 60,
+            y + 35,
+            35,
+            35
+        );
+
+    }
+
+
+    // ==================================================
     // TREES
     // ==================================================
 
     for (const tree of trees) {
 
-        const x =
-            tree.x - camera.x;
-
-        const y =
-            tree.y - camera.y;
+        const x = tree.x - camera.x;
+        const y = tree.y - camera.y;
 
 
         // Trunk
 
-        ctx.fillStyle =
-            "#7b4a24";
+        ctx.fillStyle = "#7b4a24";
 
         ctx.fillRect(
             x - 7,
@@ -960,8 +899,7 @@ function draw() {
 
         // Leaves
 
-        ctx.fillStyle =
-            "#176b2c";
+        ctx.fillStyle = "#176b2c";
 
         ctx.beginPath();
 
@@ -984,15 +922,10 @@ function draw() {
 
     for (const rock of rocks) {
 
-        const x =
-            rock.x - camera.x;
+        const x = rock.x - camera.x;
+        const y = rock.y - camera.y;
 
-        const y =
-            rock.y - camera.y;
-
-
-        ctx.fillStyle =
-            "#777";
+        ctx.fillStyle = "#777";
 
         ctx.beginPath();
 
@@ -1046,20 +979,6 @@ function draw() {
         player.y - camera.y;
 
 
-    /*
-        The character grid begins at approximately:
-
-        X = 200
-        Y = 230
-
-        There are 4 columns and 4 rows.
-
-        We crop INSIDE each cell so that
-        the blue/purple cell borders don't
-        appear around the character.
-    */
-
-
     const cellWidth = 269;
     const cellHeight = 230;
 
@@ -1075,8 +994,6 @@ function draw() {
         gridY +
         currentDirection * cellHeight;
 
-
-    // Extra padding removes the cell borders
 
     const paddingX = 18;
     const paddingY = 12;
@@ -1097,8 +1014,6 @@ function draw() {
         paddingY * 2;
 
 
-    // Draw character
-
     ctx.drawImage(
 
         playerImage,
@@ -1114,34 +1029,79 @@ function draw() {
 
         60,
         100
+
     );
 
 
-    /*
-        DEBUG HITBOX
+    // ==================================================
+    // DEBUG HITBOXES
+    // ==================================================
 
-        Leave this commented out normally.
+    if (SHOW_HITBOXES) {
 
-        To see the player's collision box,
-        remove the // from the next lines.
+        // Player hitbox
 
-    */
+        const debugPlayer =
+            getPlayerHitbox(
+                player.x,
+                player.y
+            );
 
-    /*
-    const debugBox =
-        getPlayerHitbox(
-            player.x,
-            player.y
+        ctx.strokeStyle = "red";
+        ctx.lineWidth = 2;
+
+        ctx.strokeRect(
+            debugPlayer.x - camera.x,
+            debugPlayer.y - camera.y,
+            debugPlayer.width,
+            debugPlayer.height
         );
 
-    ctx.strokeStyle = "red";
-    ctx.strokeRect(
-        debugBox.x - camera.x,
-        debugBox.y - camera.y,
-        debugBox.width,
-        debugBox.height
-    );
-    */
+
+        // House hitboxes
+
+        ctx.strokeStyle = "yellow";
+
+        for (const house of houses) {
+
+            ctx.strokeRect(
+                house.x - camera.x,
+                house.y - camera.y,
+                house.width,
+                house.height
+            );
+
+        }
+
+
+        // Water hitbox
+
+        ctx.strokeStyle = "cyan";
+
+        ctx.strokeRect(
+            water.x - camera.x,
+            water.y - camera.y,
+            water.width,
+            water.height
+        );
+
+
+        // Tree hitboxes
+
+        ctx.strokeStyle = "orange";
+
+        for (const tree of trees) {
+
+            ctx.strokeRect(
+                tree.x - 8 - camera.x,
+                tree.y - camera.y,
+                16,
+                25
+            );
+
+        }
+
+    }
 
 }
 
@@ -1156,9 +1116,7 @@ function gameLoop() {
 
     draw();
 
-    requestAnimationFrame(
-        gameLoop
-    );
+    requestAnimationFrame(gameLoop);
 
 }
 
@@ -1173,3 +1131,4 @@ gameLoop();
 
 </body>
 </html>
+```
